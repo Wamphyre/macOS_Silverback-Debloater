@@ -199,9 +199,8 @@ if [ $? -ne 0 ]; then
 fi
 
 # system
-TODISABLE=()
 
-TODISABLE+=(com.apple.bootpd \
+TODISABLE="com.apple.bootpd \
 com.apple.backupd \
 com.apple.backupd-helper \
 com.apple.cloudd \
@@ -232,9 +231,9 @@ com.apple.screensharing \
 com.apple.security.cloudkeychainproxy3 \
 com.apple.siri.morphunassetsupdaterd \
 com.apple.siriinferenced \
-com.apple.triald.system)
+com.apple.triald.system"
 
-for daemon in "${TODISABLE[@]}"
+for daemon in $TODISABLE
 do
 	sudo launchctl bootout system/${daemon}
 	if [ $? -ne 0 ]; then
