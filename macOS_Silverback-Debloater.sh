@@ -7,6 +7,12 @@
 # Modifications are written in /private/var/db/com.apple.xpc.launchd/ disabled.plist, disabled.501.plist
 # To revert, delete /private/var/db/com.apple.xpc.launchd/ disabled.plist and disabled.501.plist and reboot; sudo rm -r /private/var/db/com.apple.xpc.launchd/*
 
+# Show user agents 
+# launchctl list
+
+# Shwo system agents
+# sudo launchctl list
+
 # Disabling Spotlight
 echo "Disabling Spotlight"
 sudo mdutil -i off -a
@@ -85,149 +91,155 @@ done
 echo "Done"
 
 # user
-TODISABLE=()
 
-TODISABLE+=('com.apple.accessibility.MotionTrackingAgent' \
-'com.apple.AddressBook.ContactsAccountsService' \
-'com.apple.AMPArtworkAgent' \
-'com.apple.AMPDeviceDiscoveryAgent' \
-'com.apple.AMPLibraryAgent' \
-'com.apple.ap.adprivacyd' \
-'com.apple.ap.adservicesd' \
-'com.apple.ap.promotedcontentd' \
-'com.apple.assistant_service' \
-'com.apple.assistantd' \
-'com.apple.avconferenced' \
-'com.apple.BiomeAgent' \
-'com.apple.biomesyncd' \
-'com.apple.CalendarAgent' \
-'com.apple.calaccessd' \
-'com.apple.CallHistoryPluginHelper' \
-'com.apple.cloudd' \
-'com.apple.cloudpaird' \
-'com.apple.cloudphotod' \
-'com.apple.CloudPhotosConfiguration' \
-'com.apple.CloudSettingsSyncAgent' \
-'com.apple.CommCenter-osx' \
-'com.apple.ContactsAgent' \
-'com.apple.CoreLocationAgent' \
-'com.apple.dataaccess.dataaccessd' \
-'com.apple.ensemble' \
-'com.apple.familycircled' \
-'com.apple.familycontrols.useragent' \
-'com.apple.familynotificationd' \
-'com.apple.financed' \
-'com.apple.followupd' \
-'com.apple.gamed' \
-'com.apple.geod' \
-'com.apple.geodMachServiceBridge' \
-'com.apple.homed' \
-'com.apple.icloud.fmfd' \
-'com.apple.iCloudNotificationAgent' \
-'com.apple.iCloudUserNotifications' \
-'com.apple.icloud.searchpartyuseragent' \
-'com.apple.imagent' \
-'com.apple.imautomatichistorydeletionagent' \
-'com.apple.imtransferagent' \
-'com.apple.intelligenceplatformd' \
-'com.apple.itunescloudd' \
-'com.apple.knowledge-agent' \
-'com.apple.ManagedClient.cloudconfigurationd' \
-'com.apple.ManagedClientAgent.enrollagent' \
-'com.apple.Maps.mapspushd' \
-'com.apple.Maps.pushdaemon' \
-'com.apple.mediaanalysisd' \
-'com.apple.networkserviceproxy' \
-'com.apple.networkserviceproxy-osx' \
-'com.apple.mediastream.mstreamd' \
-'com.apple.newsd' \
-'com.apple.nsurlsessiond' \
-'com.apple.parsec-fbf' \
-'com.apple.parsecd' \
-'com.apple.passd' \
-'com.apple.photoanalysisd' \
-'com.apple.photolibraryd' \
-'com.apple.progressd' \
-'com.apple.protectedcloudstorage.protectedcloudkeysyncing' \
-'com.apple.quicklook' \
-'com.apple.quicklook.ui.helper' \
-'com.apple.quicklook.ThumbnailsAgent' \
-'com.apple.rapportd-user' \
-'com.apple.remindd' \
-'com.apple.routined' \
-'com.apple.SafariCloudHistoryPushAgent' \
-'com.apple.screensharing.agent' \
-'com.apple.screensharing.menuextra' \
-'com.apple.screensharing.MessagesAgent' \
-'com.apple.ScreenTimeAgent' \
-'com.apple.security.cloudkeychainproxy3' \
-'com.apple.sharingd' \
-'com.apple.sidecar-hid-relay' \
-'com.apple.sidecar-relay' \
-'com.apple.Siri.agent' \
-'com.apple.siri.context.service' \
-'com.apple.macos.studentd' \
-'com.apple.siriknowledged' \
-'com.apple.suggestd' \
-'com.apple.tipsd' \
-'com.apple.telephonyutilities.callservicesd' \
-'com.apple.TMHelperAgent' \
-'com.apple.TMHelperAgent.SetupOffer' \
-'com.apple.triald' \
-'com.apple.universalaccessd' \
-'com.apple.UsageTrackingAgent' \
-'com.apple.videosubscriptionsd' \
-'com.apple.WiFiVelocityAgent' \
-'com.apple.weatherd')
 
-for agent in "${TODISABLE[@]}"
+TODISABLE="com.apple.accessibility.MotionTrackingAgent \
+com.apple.accessibility.heard \
+com.apple.AddressBook.ContactsAccountsService \
+com.apple.AMPArtworkAgent \
+com.apple.AMPDeviceDiscoveryAgent \
+com.apple.AMPLibraryAgent \
+com.apple.ap.adprivacyd \
+com.apple.ap.adservicesd \
+com.apple.ap.promotedcontentd \
+com.apple.assistant_service \
+com.apple.assistantd \
+com.apple.avconferenced \
+com.apple.BiomeAgent \
+com.apple.biomesyncd \
+com.apple.CalendarAgent \
+com.apple.calaccessd \
+com.apple.CallHistoryPluginHelper \
+com.apple.cloudphotod \
+com.apple.CloudPhotosConfiguration \
+com.apple.CloudSettingsSyncAgent \
+com.apple.CommCenter-osx \
+com.apple.ContactsAgent \
+com.apple.CoreLocationAgent \
+com.apple.dataaccess.dataaccessd \
+com.apple.ensemble \
+com.apple.familycircled \
+com.apple.familycontrols.useragent \
+com.apple.familynotificationd \
+com.apple.financed \
+com.apple.followupd \
+com.apple.gamed \
+com.apple.geod \
+com.apple.geodMachServiceBridge \
+com.apple.homed \
+com.apple.icloud.fmfd \
+com.apple.iCloudNotificationAgent \
+com.apple.iCloudUserNotifications \
+com.apple.icloud.searchpartyuseragent \
+com.apple.imagent \
+com.apple.imautomatichistorydeletionagent \
+com.apple.imtransferagent \
+com.apple.intelligenceplatformd \
+com.apple.itunescloudd \
+com.apple.knowledge-agent \
+com.apple.ManagedClient.cloudconfigurationd \
+com.apple.ManagedClientAgent.enrollagent \
+com.apple.Maps.mapspushd \
+com.apple.Maps.pushdaemon \
+com.apple.mediaanalysisd \
+com.apple.networkserviceproxy \
+com.apple.networkserviceproxy-osx \
+com.apple.mediastream.mstreamd \
+com.apple.newsd \
+com.apple.nsurlsessiond \
+com.apple.parsec-fbf \
+com.apple.parsecd \
+com.apple.passd \
+com.apple.photoanalysisd \
+com.apple.photolibraryd \
+com.apple.progressd \
+com.apple.protectedcloudstorage.protectedcloudkeysyncing \
+com.apple.quicklook \
+com.apple.quicklook.ui.helper \
+com.apple.quicklook.ThumbnailsAgent \
+com.apple.rapportd-user \
+com.apple.remindd \
+com.apple.routined \
+com.apple.SafariCloudHistoryPushAgent \
+com.apple.screensharing.agent \
+com.apple.screensharing.menuextra \
+com.apple.screensharing.MessagesAgent \
+com.apple.ScreenTimeAgent \
+com.apple.security.cloudkeychainproxy3 \
+com.apple.sharingd \
+com.apple.sidecar-hid-relay \
+com.apple.sidecar-relay \
+com.apple.Siri.agent \
+com.apple.siri.context.service \
+com.apple.macos.studentd \
+com.apple.siriknowledged \
+com.apple.suggestd \
+com.apple.tipsd \
+com.apple.telephonyutilities.callservicesd \
+com.apple.TMHelperAgent \
+com.apple.TMHelperAgent.SetupOffer \
+com.apple.triald \
+com.apple.universalaccessd \
+com.apple.UsageTrackingAgent \
+com.apple.videosubscriptionsd \
+com.apple.weatherd"
+
+for agent in $TODISABLE
 do
-	launchctl bootout gui/501/${agent}
-	launchctl disable gui/501/${agent}
+	sudo launchctl bootout gui/502/${agent}
+	if [ $? -ne 0 ]; then
+		echo "Failed to boot out: ${agent}"
+	fi
+	sudo launchctl disable gui/502/${agent}
 done
 
 launchctl unload -w /System/Library/LaunchAgents/com.apple.cloudpaird.plist
+if [ $? -ne 0 ]; then
+	echo "Failed to unload com.apple.cloudpaird"
+fi
 
 # system
 TODISABLE=()
 
-TODISABLE+=('com.apple.bootpd' \
-'com.apple.backupd' \
-'com.apple.backupd-helper' \
-'com.apple.cloudd' \
-'com.apple.cloudpaird' \
-'com.apple.cloudphotod' \
-'com.apple.CloudPhotosConfiguration' \
-'com.apple.CoreLocationAgent' \
-'com.apple.coreduetd' \
-'com.apple.dhcp6d' \
-'com.apple.familycontrols' \
-'com.apple.findmymacmessenger' \
-'com.apple.followupd' \
-'com.apple.FollowUpUI' \
-'com.apple.ftp-proxy' \
-'com.apple.ftpd' \
-'com.apple.GameController.gamecontrollerd' \
-'com.apple.icloud.fmfd' \
-'com.apple.icloud.searchpartyd' \
-'com.apple.itunescloudd' \
-'com.apple.locationd' \
-'com.apple.ManagedClient.cloudconfigurationd' \
-'com.apple.networkserviceproxy' \
-'com.apple.netbiosd' \
-'com.apple.nsurlsessiond' \
-'com.apple.protectedcloudstorage.protectedcloudkeysyncing' \
-'com.apple.rapportd' \
-'com.apple.screensharing' \
-'com.apple.security.cloudkeychainproxy3' \
-'com.apple.siri.morphunassetsupdaterd' \
-'com.apple.siriinferenced' \
-'com.apple.triald.system' \
-'com.apple.wifianalyticsd')
+TODISABLE+=(com.apple.bootpd \
+com.apple.backupd \
+com.apple.backupd-helper \
+com.apple.cloudd \
+com.apple.cloudpaird \
+com.apple.cloudphotod \
+com.apple.CloudPhotosConfiguration \
+com.apple.CoreLocationAgent \
+com.apple.coreduetd \
+com.apple.dhcp6d \
+com.apple.familycontrols \
+com.apple.findmymacmessenger \
+com.apple.followupd \
+com.apple.FollowUpUI \
+com.apple.ftp-proxy \
+com.apple.ftpd \
+com.apple.GameController.gamecontrollerd \
+com.apple.icloud.fmfd \
+com.apple.icloud.searchpartyd \
+com.apple.itunescloudd \
+com.apple.locationd \
+com.apple.ManagedClient.cloudconfigurationd \
+com.apple.networkserviceproxy \
+com.apple.netbiosd \
+com.apple.nsurlsessiond \
+com.apple.protectedcloudstorage.protectedcloudkeysyncing \
+com.apple.rapportd \
+com.apple.screensharing \
+com.apple.security.cloudkeychainproxy3 \
+com.apple.siri.morphunassetsupdaterd \
+com.apple.siriinferenced \
+com.apple.triald.system)
 
 for daemon in "${TODISABLE[@]}"
 do
 	sudo launchctl bootout system/${daemon}
+	if [ $? -ne 0 ]; then
+		echo "Failed to boot out: ${daemon}"
+	fi
 	sudo launchctl disable system/${daemon}
 done
 
@@ -235,11 +247,9 @@ done
 echo "Debloat done"
 read -e -p "(y/N) Do you want to reboot now? " yn
 if [ "$yn" = "y" ]; then
-  sleep 3
   echo "Rebooting..."
   sudo reboot
 else
-  sleep 3
   echo "Defaulting to no."
   exit
 fi
