@@ -45,8 +45,6 @@ sudo launchctl remove com.apple.ReportPanic
 sudo launchctl remove com.apple.ReportCrash
 sudo launchctl remove com.apple.ReportCrash.Self
 sudo launchctl remove com.apple.DiagnosticReportCleanup.plist
-sudo launchctl remove com.apple.ap.adprivacyd
-sudo launchctl remove com.apple.siriknowledged
 sudo launchctl remove com.apple.helpd
 sudo launchctl remove com.apple.mobiledeviceupdater
 sudo launchctl remove com.apple.screensharing.MessagesAgent
@@ -59,14 +57,14 @@ echo "Done"
 
 # Disable and remove Safari services
 echo "Disabling and removing Safari services"
-sudo launchctl remove com.apple.SafariCloudHistoryPushAgent
-sudo launchctl remove com.apple.Safari.SafeBrowsing.Service
-sudo launchctl remove com.apple.SafariNotificationAgent
-sudo launchctl remove com.apple.SafariPlugInUpdateNotifier
-sudo launchctl remove com.apple.SafariHistoryServiceAgent
-sudo launchctl remove com.apple.SafariLaunchAgent
-sudo launchctl remove com.apple.SafariPlugInUpdateNotifier
-sudo launchctl remove com.apple.safaridavclient
+TODISABLE="com.apple.SafariBookmarksSyncAgent com.apple.SafariHistoryServiceAgent com.apple.Safari.PasswordBreachAgent com.apple.Safari.SafeBrowsing.Service com.apple.SafariNotificationAgent com.apple.SafariLaunchAgent com.apple.Safari.History"
+for agent in $TODISABLE;
+do
+	sudo launchctl disable gui/502/${agent}
+	if [ $? -ne 0 ]; then
+		echo "Failed to disable out: ${agent}"
+	fi
+done
 echo "Done"
 
 # Disable application state on shutdown
@@ -169,10 +167,7 @@ com.apple.security.cloudkeychainproxy3 \
 com.apple.sharingd \
 com.apple.sidecar-hid-relay \
 com.apple.sidecar-relay \
-com.apple.Siri.agent \
-com.apple.siri.context.service \
 com.apple.macos.studentd \
-com.apple.siriknowledged \
 com.apple.suggestd \
 com.apple.tipsd \
 com.apple.telephonyutilities.callservicesd \
@@ -182,7 +177,13 @@ com.apple.triald \
 com.apple.universalaccessd \
 com.apple.UsageTrackingAgent \
 com.apple.videosubscriptionsd \
-com.apple.weatherd"
+com.apple.weatherd \
+com.apple.siri.context.service \
+com.apple.siriinferenced \
+com.apple.sirittsd \
+com.apple.SiriTTSTrainingAgent \
+com.apple.siri-distributed-evaluation
+"
 
 for agent in $TODISABLE
 do
@@ -229,17 +230,15 @@ com.apple.protectedcloudstorage.protectedcloudkeysyncing \
 com.apple.rapportd \
 com.apple.screensharing \
 com.apple.security.cloudkeychainproxy3 \
-com.apple.siri.morphunassetsupdaterd \
-com.apple.siriinferenced \
-com.apple.triald.system"
+com.apple.triald.system \
+com.apple.siri.acousticsignature"
 
 for daemon in $TODISABLE
-do
-	sudo launchctl bootout system/${daemon}
-	if [ $? -ne 0 ]; then
-		echo "Failed to boot out: ${daemon}"
-	fi
+do	
 	sudo launchctl disable system/${daemon}
+	if [ $? -ne 0 ]; then
+		echo "Failed to disable: ${daemon}"
+	fi
 done
 
 # Reboot
