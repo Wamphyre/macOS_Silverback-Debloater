@@ -450,6 +450,7 @@ if [ "$yn" = "y" ]; then
     com.apple.mediaremoteagent
     com.apple.photoanalysisd
     com.apple.voicememod
+    com.apple.audiomxd
     com.apple.geod
     com.apple.locate
     com.apple.locationd
