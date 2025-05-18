@@ -6,6 +6,11 @@ Newer version of apple macos comes with tons of bloatware which annoying side ef
 - Other apps like news, maps, address book ... runs background services even when you never open them.
 More and more of stuffs like this make this script becoming essential.
 
+# RUN
+- open terminal
+- cd <path to this script>
+- chmod +x ./macos_debloater.sh
+- ./macos_debloater.sh
 
 # USE AT YOUR OWN RISK!
 - Need to disable sip ("csrutil disable" from Terminal in Recovery) if you want to disable system services. After that you can re-enabl sip.
