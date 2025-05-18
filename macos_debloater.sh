@@ -451,6 +451,7 @@ if [ "$yn" = "y" ]; then
     com.apple.CoreLocationAgent
     com.apple.recentsd
     com.apple.suggestd
+    com.apple.audiomxd
     "
     for agent in $TODISABLE; do
         sudo launchctl disable system/${agent}
