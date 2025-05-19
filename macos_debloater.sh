@@ -50,15 +50,6 @@ else
     echo "Skipping disabling application state on shutdown."
 fi
 
-# **Disable Spotlight**
-read -e -p "(y/N) Do you want to disable Spotlight? " yn
-if [ "$yn" = "y" ]; then
-    echo "Disabling Spotlight"
-    sudo mdutil -i off -a
-    echo "Done"
-else
-    echo "Skipping disabling Spotlight."
-fi
 
 # **Disable automatic updates**
 read -e -p "(y/N) Do you want to disable automatic updates? " yn
