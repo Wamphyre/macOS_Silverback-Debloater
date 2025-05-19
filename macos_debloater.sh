@@ -5,8 +5,6 @@
 # v1.1
 
 # Disabling SIP is required  ("csrutil disable" from Terminal in Recovery)
-# Modifications are written in /private/var/db/com.apple.xpc.launchd/ disabled.plist, disabled.501.plist
-# To revert, delete /private/var/db/com.apple.xpc.launchd/ disabled.plist and disabled.501.plist and reboot; sudo rm -r /private/var/db/com.apple.xpc.launchd/*
 
 # Show user agents 
 # launchctl list
