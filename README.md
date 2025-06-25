@@ -1,19 +1,21 @@
 # macOS Monterey Intel Desktop Audio Optimizer
 
-A comprehensive, interactive system optimization script specifically designed for **Intel iMac and Mac mini** running **macOS Monterey (12.x)** for professional audio production. This enhanced version builds upon the proven foundation of the original script while adding Monterey-specific optimizations and Intel desktop-focused improvements.
+A comprehensive, interactive system optimization script specifically designed for **Intel iMac, Mac mini, and Mac Pro** running **macOS Monterey (12.x)** for professional audio production. This enhanced version builds upon the proven foundation of the original script while adding Monterey-specific optimizations and Intel desktop-focused improvements.
 
 ## 🎯 **Target Systems**
 
 ### **Supported Hardware**
 - **Intel iMac** (2015-2020) - All models compatible with Monterey
 - **Intel Mac mini** (2014-2020) - Including configurations with eGPU
-- **Intel Processors** - Core i5, i7, i9 (6th-10th generation)
+- **Intel Mac Pro** (2019) - Mac Pro 7,1 with high-performance optimizations
+- **Intel Processors** - Core i5, i7, i9, Xeon (6th-10th generation)
 - **Desktop Configuration** - Optimized for AC-powered, stationary use
 
-### **Excluded Systems**
-- ❌ **Apple Silicon Macs** - Use dedicated Apple Silicon optimizer
-- ❌ **MacBook** models - Use portable-specific optimizer
-- ❌ **Older macOS** versions - Monterey-specific optimizations required
+### **Flexible Compatibility**
+- ✅ **Primary targets**: iMac, Mac mini, Mac Pro
+- ✅ **Other Intel systems**: Compatible with user confirmation
+- ✅ **Processor flexible**: Works with Intel and compatible processors
+- ⚠️ **Apple Silicon**: Use dedicated Apple Silicon optimizer instead
 
 ## 🚀 **Key Features**
 
@@ -56,6 +58,13 @@ A comprehensive, interactive system optimization script specifically designed fo
 - **Pro Tools**: 64 samples @ 48kHz stable
 - **Ableton Live**: 32-64 samples typical
 
+#### **Mac Pro 7,1 (2019) - Professional Workstation**
+- **Logic Pro X**: 16-32 samples @ 48kHz achievable (with high-end interfaces)
+- **Pro Tools**: 32-64 samples @ 48kHz stable
+- **Ableton Live**: 16-32 samples typical
+- **Simultaneous tracks**: 100+ with heavy plugin usage
+- **Multiple interfaces**: Excellent support for complex routing
+
 #### **Standard Configuration (i5, 16GB)**
 - **Logic Pro X**: 64 samples @ 48kHz achievable  
 - **Pro Tools**: 128 samples @ 48kHz stable
@@ -69,15 +78,26 @@ A comprehensive, interactive system optimization script specifically designed fo
 
 ### **Kernel Parameter Enhancements**
 ```bash
-# Scalable based on system memory
-kern.maxfiles=65536-98304          # File descriptor limits
-kern.maxfilesperproc=32768-49152   # Per-process limits
-kern.sched.rt_max_quantum=20000    # Real-time scheduling quantum
+# Scalable based on system hardware and memory
+# Mac Pro 7,1 (2019) - Workstation class
+kern.maxfiles=131072               # Maximum file descriptors
+kern.maxfilesperproc=65536        # Per-process limits (highest)
+
+# High-memory systems (32GB+)
+kern.maxfiles=98304               # File descriptor limits
+kern.maxfilesperproc=49152        # Per-process limits
+
+# Standard systems (16-32GB)
+kern.maxfiles=65536               # Original proven values
+kern.maxfilesperproc=32768        # Stable configuration
+
+# Real-time scheduling (all systems)
+kern.sched.rt_max_quantum=20000   # Real-time scheduling quantum
 
 # Network optimization for audio interfaces
-kern.ipc.maxsockbuf=8388608        # Socket buffer size
-net.inet.tcp.sendspace=1048576     # TCP send buffer
-net.inet.tcp.recvspace=1048576     # TCP receive buffer
+kern.ipc.maxsockbuf=8388608       # Socket buffer size
+net.inet.tcp.sendspace=1048576    # TCP send buffer
+net.inet.tcp.recvspace=1048576    # TCP receive buffer
 ```
 
 ### **Power Management (Intel Desktop)**
@@ -236,11 +256,14 @@ diskutil activity
 **Recommendation**: Disable for dedicated audio machines with physical security
 
 ### **Hackintosh Compatibility**
-This script is designed to be **Hackintosh-friendly**:
+This script is designed to be **Hackintosh-friendly** and flexible:
 - ❌ **No GPU switching** commands that can cause issues
-- ❌ **No hardware-specific** power management that might conflict
+- ❌ **No hardware-specific** power management that might conflict  
+- ❌ **No restrictive CPU checking** that blocks compatible systems
 - ✅ **Standard kernel parameters** that work across configurations
 - ✅ **Service-level optimizations** that are universally compatible
+- ✅ **User confirmation** for potentially sensitive operations
+- ✅ **Flexible hardware detection** with override options
 
 ### **Network Audio Considerations**
 For **Dante**, **AVB**, or **networked audio interfaces**:
@@ -250,13 +273,6 @@ For **Dante**, **AVB**, or **networked audio interfaces**:
 - Test with multiple devices before critical work
 
 ## 🔄 **Upgrade Path and Compatibility**
-
-### **From Original Script**
-If migrating from the original script:
-1. Run original restoration script (if available)
-2. Restart system
-3. Run new Monterey-optimized script
-4. Test thoroughly with your audio setup
 
 ### **Future macOS Updates**
 - **Monterey point updates** (12.1, 12.2, etc.): Generally compatible
