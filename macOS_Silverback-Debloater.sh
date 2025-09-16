@@ -9,12 +9,39 @@ echo "=== macOS Monterey/Sequoia Intel Desktop Audio Optimizer ==="
 echo "Enhanced version for Intel iMac/Mac mini/Mac Pro with OS-specific optimizations"
 echo ""
 
+# Dry-run detection (via env DRY_RUN=1 or flags --dry-run | -n)
+DRY_RUN=${DRY_RUN:-0}
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run|-n)
+            DRY_RUN=1
+            ;;
+    esac
+done
+
+if [[ "$DRY_RUN" == "1" ]]; then
+echo "🧪 DRY RUN MODE: no changes will be applied; commands will be logged only."
+fi
+
+# Command wrappers to avoid side effects in dry run
+sudo() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: sudo $*"; else command sudo "$@"; fi }
+defaults() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: defaults $*"; else command defaults "$@"; fi }
+launchctl() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: launchctl $*"; else command launchctl "$@"; fi }
+mdutil() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: mdutil $*"; else command mdutil "$@"; fi }
+pmset() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: pmset $*"; else command pmset "$@"; fi }
+systemsetup() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: systemsetup $*"; else command systemsetup "$@"; fi }
+tmutil() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: tmutil $*"; else command tmutil "$@"; fi }
+fdesetup() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: fdesetup $*"; else command fdesetup "$@"; fi }
+killall() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: killall $*"; else command killall "$@"; fi }
+softwareupdate() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: softwareupdate $*"; else command softwareupdate "$@"; fi }
+
 # System detection and compatibility check
 MACOS_VERSION=$(sw_vers -productVersion | cut -d. -f1-2)
 MACOS_VERSION_MAJOR=$(echo $MACOS_VERSION | cut -d. -f1)
 HARDWARE_MODEL=$(system_profiler SPHardwareDataType | grep "Model Name" | awk -F: '{print $2}' | xargs)
 PROCESSOR_TYPE=$(sysctl -n machdep.cpu.brand_string)
-MEMORY_GB=$(system_profiler SPHardwareDataType | grep "Memory:" | awk '{print $2}' | cut -d' ' -f1)
+# Robust memory detection (in GB) using sysctl to avoid locale-dependent parsing
+MEMORY_GB=$(( $(sysctl -n hw.memsize) / 1024 / 1024 / 1024 ))
 
 echo "🔍 System Information:"
 echo "   macOS Version: $MACOS_VERSION"
@@ -76,16 +103,89 @@ confirm_recommended() {
     confirm "$1"
 }
 
+# Current user id for GUI launchctl scopes
+CURRENT_UID=$(id -u)
+
+# Helpers for safe sysctl usage and persistence
+sysctl_supported() {
+    # Check if a sysctl key exists on this system
+    sysctl -a 2>/dev/null | awk -F: '{print $1}' | grep -qx "$1"
+}
+
+persist_sysctl() {
+    # Ensure sysctl.conf exists and deduplicate before appending
+    local key="$1"
+    local value="$2"
+    sudo touch /etc/sysctl.conf
+    sudo sed -i '' "/^${key}=/d" /etc/sysctl.conf 2>/dev/null
+    echo "${key}=${value}" | sudo tee -a /etc/sysctl.conf >/dev/null
+}
+
+sysctl_set() {
+    # sysctl_set <key> <value>
+    local key="$1"
+    local value="$2"
+    if sysctl_supported "$key"; then
+        sudo sysctl -w "${key}=${value}"
+        persist_sysctl "$key" "$value"
+    else
+        echo "ℹ️  Skipping unsupported sysctl: ${key}"
+    fi
+}
+
 echo "This script will optimize your Intel Mac for professional audio production."
 echo "All changes are reversible and a restoration script will be created."
 echo ""
 
 # Create comprehensive restoration script first for safety
 echo "📝 Creating restoration script..."
+if [[ "$DRY_RUN" == "1" ]]; then
+echo "DRY_RUN: Would create ~/Desktop/restore_audio_optimization.sh"
+else
 cat > ~/Desktop/restore_audio_optimization.sh << 'EOF'
 #!/bin/bash
+
 echo "=== Restoring macOS Audio Optimizations ==="
 echo "This will restore all original system settings..."
+
+# Minimal helpers and detection within the restore script
+confirm() {
+    read -r -p "${1:-Continue?} [Y/n] " response
+    case "$response" in
+        [nN][oO]|[nN]) false ;;
+        *) true ;;
+    esac
+}
+confirm_recommended() { confirm "$1"; }
+
+# DRY RUN support in restore script
+DRY_RUN=${DRY_RUN:-0}
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run|-n)
+            DRY_RUN=1
+            ;;
+    esac
+done
+
+# Command wrappers (restore) to avoid side effects in dry run
+defaults() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: defaults $*"; else command defaults "$@"; fi }
+launchctl() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: launchctl $*"; else command launchctl "$@"; fi }
+mdutil() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: mdutil $*"; else command mdutil "$@"; fi }
+pmset() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: pmset $*"; else command pmset "$@"; fi }
+systemsetup() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: systemsetup $*"; else command systemsetup "$@"; fi }
+tmutil() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: tmutil $*"; else command tmutil "$@"; fi }
+sudo() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: sudo $*"; else command sudo "$@"; fi }
+killall() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: killall $*"; else command killall "$@"; fi }
+softwareupdate() { if [[ "$DRY_RUN" == "1" ]]; then echo "DRY_RUN: softwareupdate $*"; else command softwareupdate "$@"; fi }
+
+# Detect environment for informational output
+MACOS_VERSION=$(sw_vers -productVersion | cut -d. -f1-2)
+MACOS_VERSION_MAJOR=$(echo "$MACOS_VERSION" | cut -d. -f1)
+IS_SEQUOIA=false
+if [[ "$MACOS_VERSION_MAJOR" == "15" ]]; then IS_SEQUOIA=true; fi
+HARDWARE_MODEL=$(system_profiler SPHardwareDataType | grep "Model Name" | awk -F: '{print $2}' | xargs)
+CURRENT_UID=$(id -u)
 
 # Restore Spotlight indexing
 echo "🔍 Restoring Spotlight indexing..."
@@ -106,6 +206,10 @@ defaults delete com.apple.dock expose-animation-duration 2>/dev/null
 defaults delete com.apple.dock springboard-show-duration 2>/dev/null
 defaults delete com.apple.dock springboard-hide-duration 2>/dev/null
 defaults delete NSGlobalDomain NSScrollAnimationEnabled 2>/dev/null
+# Restore App Nap default
+defaults delete NSGlobalDomain NSAppSleepDisabled 2>/dev/null
+# Restore scroll rubberbanding if previously disabled
+defaults delete NSGlobalDomain NSScrollViewRubberbanding 2>/dev/null
 
 # Restore application state saving
 defaults delete com.apple.loginwindow TALLogoutSavesState 2>/dev/null
@@ -142,13 +246,18 @@ SERVICES_TO_RESTORE=(
     "com.apple.WeatherKit"
     "com.apple.mlruntime"
     "com.apple.aiml.appleintelligenceserviced"
+    # Newly added optional services
+    "com.apple.bird"
+    "com.apple.cloudd"
+    "com.apple.sharingd"
+    "com.apple.notificationcenterui"
 )
 
 for service in "${SERVICES_TO_RESTORE[@]}"; do
     sudo launchctl enable system/$service 2>/dev/null
     sudo launchctl bootstrap system /System/Library/LaunchDaemons/$service.plist 2>/dev/null
-    launchctl enable gui/501/$service 2>/dev/null
-    launchctl bootstrap gui/501 /System/Library/LaunchAgents/$service.plist 2>/dev/null
+    launchctl enable gui/$CURRENT_UID/$service 2>/dev/null
+    launchctl bootstrap gui/$CURRENT_UID /System/Library/LaunchAgents/$service.plist 2>/dev/null
 done
 
 # Restore power management to defaults
@@ -167,6 +276,10 @@ sudo systemsetup -setnetworktimeserver time.apple.com 2>/dev/null
 
 # Reactivate Time Machine if it was disabled
 sudo tmutil enable 2>/dev/null
+
+# Re-enable automatic software updates if previously disabled
+sudo softwareupdate --schedule on 2>/dev/null
+defaults write com.apple.SoftwareUpdate AutomaticCheckEnabled -bool true
 
 echo ""
 echo "🎵 RECOMMENDED AUDIO SETTINGS:"
@@ -202,7 +315,7 @@ echo "• CPU Usage Limit: 85%"
 echo "• Delay Compensation: Long"
 echo ""
 
-if confirm_recommended "Restart system now to apply all optimizations? [Y/n]"; then
+if confirm_recommended "Restart system now to apply restoration changes? [Y/n]"; then
     echo ""
     echo "🚀 System will restart in 10 seconds..."
     echo "💾 Save any open work NOW!"
@@ -216,16 +329,18 @@ if confirm_recommended "Restart system now to apply all optimizations? [Y/n]"; t
     sudo reboot
 else
     echo ""
-    echo "⏳ Manual restart required to apply all optimizations"
+echo "⏳ Manual restart required to apply restoration changes"
     echo ""
     echo "🎛️  Happy music production on your optimized Intel Mac!"
-fi "✅ All optimizations have been restored"
+fi
+
 echo "🔄 Please restart your system to complete the restoration"
 EOF
 
 chmod +x ~/Desktop/restore_audio_optimization.sh
 echo "✅ Restoration script created: ~/Desktop/restore_audio_optimization.sh"
 echo ""
+fi
 
 # 1. Spotlight Indexing Optimization
 echo "=== 1. SPOTLIGHT INDEXING OPTIMIZATION ==="
@@ -321,8 +436,8 @@ if confirm_recommended "Disable unnecessary background services (telemetry, anal
     for service in "${SAFE_TO_DISABLE[@]}"; do
         sudo launchctl bootout system/$service 2>/dev/null
         sudo launchctl disable system/$service 2>/dev/null
-        launchctl bootout gui/501/$service 2>/dev/null
-        launchctl disable gui/501/$service 2>/dev/null
+        launchctl bootout gui/$CURRENT_UID/$service 2>/dev/null
+        launchctl disable gui/$CURRENT_UID/$service 2>/dev/null
     done
     
     echo "✓ Background telemetry and analytics services disabled"
@@ -346,71 +461,44 @@ if confirm_recommended "Apply enhanced audio-specific kernel and memory optimiza
     if [[ "$IS_SEQUOIA" == true ]]; then
         # Sequoia can handle even higher limits
         if [[ "$HARDWARE_MODEL" =~ "Mac Pro" ]]; then
-            sudo sysctl -w kern.maxfiles=262144
-            sudo sysctl -w kern.maxfilesperproc=131072
+            sysctl_set kern.maxfiles 262144
+            sysctl_set kern.maxfilesperproc 131072
             echo "  → Applied Mac Pro Sequoia configuration (${MEMORY_GB}GB detected)"
         elif [[ "$MEMORY_GB" -ge 32 ]]; then
-            sudo sysctl -w kern.maxfiles=196608
-            sudo sysctl -w kern.maxfilesperproc=98304
+            sysctl_set kern.maxfiles 196608
+            sysctl_set kern.maxfilesperproc 98304
             echo "  → Applied high-memory Sequoia configuration (${MEMORY_GB}GB detected)"
         else
-            sudo sysctl -w kern.maxfiles=131072
-            sudo sysctl -w kern.maxfilesperproc=65536
+            sysctl_set kern.maxfiles 131072
+            sysctl_set kern.maxfilesperproc 65536
             echo "  → Applied standard Sequoia configuration (${MEMORY_GB}GB detected)"
         fi
     else
         # Original Monterey values
         if [[ "$HARDWARE_MODEL" =~ "Mac Pro" ]]; then
-            sudo sysctl -w kern.maxfiles=131072
-            sudo sysctl -w kern.maxfilesperproc=65536
+            sysctl_set kern.maxfiles 131072
+            sysctl_set kern.maxfilesperproc 65536
         elif [[ "$MEMORY_GB" -ge 32 ]]; then
-            sudo sysctl -w kern.maxfiles=98304
-            sudo sysctl -w kern.maxfilesperproc=49152
+            sysctl_set kern.maxfiles 98304
+            sysctl_set kern.maxfilesperproc 49152
         else
-            sudo sysctl -w kern.maxfiles=65536
-            sudo sysctl -w kern.maxfilesperproc=32768
+            sysctl_set kern.maxfiles 65536
+            sysctl_set kern.maxfilesperproc 32768
         fi
     fi
     
     # Enhanced network buffers
-    sudo sysctl -w kern.ipc.maxsockbuf=8388608
-    sudo sysctl -w net.inet.tcp.sendspace=1048576
-    sudo sysctl -w net.inet.tcp.recvspace=1048576
+    sysctl_set kern.ipc.maxsockbuf 8388608
+    sysctl_set net.inet.tcp.sendspace 1048576
+    sysctl_set net.inet.tcp.recvspace 1048576
     
-    # Additional optimizations that work on both OS versions
-    sudo sysctl -w kern.timer.longterm.threshold=1000
+    # Additional optimizations that work on both OS versions (applied if supported)
+    sysctl_set kern.timer.longterm.threshold 1000
     
-    # Make optimizations persistent
+    # Make optimizations persistent (handled by sysctl_set -> persist_sysctl)
+    sudo touch /etc/sysctl.conf
+    sudo sed -i '' '/^# macOS Audio Optimizations$/d' /etc/sysctl.conf 2>/dev/null
     echo "# macOS Audio Optimizations" | sudo tee -a /etc/sysctl.conf >/dev/null
-    
-    if [[ "$IS_SEQUOIA" == true ]]; then
-        if [[ "$HARDWARE_MODEL" =~ "Mac Pro" ]]; then
-            echo "kern.maxfiles=262144" | sudo tee -a /etc/sysctl.conf >/dev/null
-            echo "kern.maxfilesperproc=131072" | sudo tee -a /etc/sysctl.conf >/dev/null
-        elif [[ "$MEMORY_GB" -ge 32 ]]; then
-            echo "kern.maxfiles=196608" | sudo tee -a /etc/sysctl.conf >/dev/null
-            echo "kern.maxfilesperproc=98304" | sudo tee -a /etc/sysctl.conf >/dev/null
-        else
-            echo "kern.maxfiles=131072" | sudo tee -a /etc/sysctl.conf >/dev/null
-            echo "kern.maxfilesperproc=65536" | sudo tee -a /etc/sysctl.conf >/dev/null
-        fi
-    else
-        if [[ "$HARDWARE_MODEL" =~ "Mac Pro" ]]; then
-            echo "kern.maxfiles=131072" | sudo tee -a /etc/sysctl.conf >/dev/null
-            echo "kern.maxfilesperproc=65536" | sudo tee -a /etc/sysctl.conf >/dev/null
-        elif [[ "$MEMORY_GB" -ge 32 ]]; then
-            echo "kern.maxfiles=98304" | sudo tee -a /etc/sysctl.conf >/dev/null
-            echo "kern.maxfilesperproc=49152" | sudo tee -a /etc/sysctl.conf >/dev/null
-        else
-            echo "kern.maxfiles=65536" | sudo tee -a /etc/sysctl.conf >/dev/null
-            echo "kern.maxfilesperproc=32768" | sudo tee -a /etc/sysctl.conf >/dev/null
-        fi
-    fi
-    
-    echo "kern.ipc.maxsockbuf=8388608" | sudo tee -a /etc/sysctl.conf >/dev/null
-    echo "net.inet.tcp.sendspace=1048576" | sudo tee -a /etc/sysctl.conf >/dev/null
-    echo "net.inet.tcp.recvspace=1048576" | sudo tee -a /etc/sysctl.conf >/dev/null
-    echo "kern.timer.longterm.threshold=1000" | sudo tee -a /etc/sysctl.conf >/dev/null
     
     echo "✓ Audio-specific kernel optimizations applied and made persistent"
     echo "  → Enhanced file handling and real-time scheduling for audio"
@@ -459,8 +547,8 @@ if [[ "$IS_MONTEREY" == true ]]; then
     echo ""
     echo "Shortcuts app background processing can interfere with real-time audio."
     if confirm "Disable Shortcuts background processing? [Y/n]"; then
-        launchctl bootout gui/501/com.apple.shortcuts.useractivity 2>/dev/null
-        launchctl disable gui/501/com.apple.shortcuts.useractivity 2>/dev/null
+        launchctl bootout gui/$CURRENT_UID/com.apple.shortcuts.useractivity 2>/dev/null
+        launchctl disable gui/$CURRENT_UID/com.apple.shortcuts.useractivity 2>/dev/null
         echo "✓ Shortcuts background processing disabled"
     fi
     
@@ -520,12 +608,15 @@ elif [[ "$IS_SEQUOIA" == true ]]; then
     echo ""
     echo "Applying Sequoia-specific kernel optimizations..."
     if confirm_recommended "Apply Sequoia kernel tweaks for enhanced audio performance? [Y/n]"; then
-        # VM swappiness (this one actually works)
-        sudo sysctl -w vm.swappiness=10
-        echo "vm.swappiness=10" | sudo tee -a /etc/sysctl.conf >/dev/null
+        # Gate any Sequoia-specific tunables by checking support first
+        if sysctl_supported vm.swappiness; then
+            sysctl_set vm.swappiness 10
+        else
+            echo "ℹ️  vm.swappiness not supported on macOS; skipping."
+        fi
         
         echo "✓ Sequoia-specific kernel optimizations applied"
-        echo "  → Better memory management for audio workloads"
+        echo "  → Better memory management for audio workloads (where supported)"
     fi
 fi
 echo ""
@@ -538,12 +629,12 @@ echo ""
 # Siri
 echo "Siri services include AI processing that can consume CPU cycles."
 if confirm "Disable Siri? (Recommended for audio production) [Y/n]"; then
-    launchctl bootout gui/501/com.apple.Siri.agent 2>/dev/null
-    launchctl disable gui/501/com.apple.Siri.agent 2>/dev/null
-    launchctl bootout gui/501/com.apple.assistant_service 2>/dev/null
-    launchctl disable gui/501/com.apple.assistant_service 2>/dev/null
-    launchctl bootout gui/501/com.apple.assistantd 2>/dev/null
-    launchctl disable gui/501/com.apple.assistantd 2>/dev/null
+    launchctl bootout gui/$CURRENT_UID/com.apple.Siri.agent 2>/dev/null
+    launchctl disable gui/$CURRENT_UID/com.apple.Siri.agent 2>/dev/null
+    launchctl bootout gui/$CURRENT_UID/com.apple.assistant_service 2>/dev/null
+    launchctl disable gui/$CURRENT_UID/com.apple.assistant_service 2>/dev/null
+    launchctl bootout gui/$CURRENT_UID/com.apple.assistantd 2>/dev/null
+    launchctl disable gui/$CURRENT_UID/com.apple.assistantd 2>/dev/null
     echo "✓ Siri services disabled"
 fi
 
@@ -551,8 +642,8 @@ fi
 echo ""
 echo "Game Center is typically not needed for audio production work."
 if confirm "Disable Game Center services? [Y/n]"; then
-    launchctl bootout gui/501/com.apple.gamed 2>/dev/null
-    launchctl disable gui/501/com.apple.gamed 2>/dev/null
+    launchctl bootout gui/$CURRENT_UID/com.apple.gamed 2>/dev/null
+    launchctl disable gui/$CURRENT_UID/com.apple.gamed 2>/dev/null
     echo "✓ Game Center disabled"
 fi
 
@@ -560,10 +651,10 @@ fi
 echo ""
 echo "Photos analysis services use machine learning to analyze your photo library."
 if confirm "Disable Photos analysis services? [Y/n]"; then
-    launchctl bootout gui/501/com.apple.photoanalysisd 2>/dev/null
-    launchctl disable gui/501/com.apple.photoanalysisd 2>/dev/null
-    launchctl bootout gui/501/com.apple.mediaanalysisd 2>/dev/null
-    launchctl disable gui/501/com.apple.mediaanalysisd 2>/dev/null
+    launchctl bootout gui/$CURRENT_UID/com.apple.photoanalysisd 2>/dev/null
+    launchctl disable gui/$CURRENT_UID/com.apple.photoanalysisd 2>/dev/null
+    launchctl bootout gui/$CURRENT_UID/com.apple.mediaanalysisd 2>/dev/null
+    launchctl disable gui/$CURRENT_UID/com.apple.mediaanalysisd 2>/dev/null
     echo "✓ Photos analysis services disabled"
 fi
 
@@ -575,7 +666,47 @@ if confirm "⚠️  Disable Time Machine automatic backups? (WARNING: You will l
     echo "✓ Time Machine automatic backups disabled"
     echo "  ⚠️  Remember to implement an alternative backup strategy!"
 fi
-echo ""
+echo "" 
+
+# 8.1 Additional Optional Optimizations for a Lighter System
+# App Nap (can throttle background apps; disable to keep performance stable)
+if confirm_recommended "Disable App Nap globally? [Y/n]"; then
+    defaults write NSGlobalDomain NSAppSleepDisabled -bool YES
+    echo "✓ App Nap disabled globally"
+fi
+
+# iCloud Drive sync services (reduces background CPU and I/O)
+if confirm "Disable iCloud Drive sync services (bird, cloudd)? [Y/n]"; then
+    launchctl bootout gui/$CURRENT_UID/com.apple.bird 2>/dev/null
+    launchctl disable gui/$CURRENT_UID/com.apple.bird 2>/dev/null
+    launchctl bootout gui/$CURRENT_UID/com.apple.cloudd 2>/dev/null
+    launchctl disable gui/$CURRENT_UID/com.apple.cloudd 2>/dev/null
+    echo "✓ iCloud Drive sync services disabled (user scope)"
+fi
+
+# Handoff / Universal Clipboard (sharingd)
+if confirm "Disable Handoff and Universal Clipboard background service? [Y/n]"; then
+    launchctl bootout gui/$CURRENT_UID/com.apple.sharingd 2>/dev/null
+    launchctl disable gui/$CURRENT_UID/com.apple.sharingd 2>/dev/null
+    echo "✓ Handoff/Universal Clipboard disabled"
+fi
+
+# Notification Center (removes banners/badges; reduces UI overhead)
+if confirm "Disable Notification Center UI? (You will not see notifications) [Y/n]"; then
+    launchctl bootout gui/$CURRENT_UID/com.apple.notificationcenterui 2>/dev/null
+    launchctl disable gui/$CURRENT_UID/com.apple.notificationcenterui 2>/dev/null
+    killall NotificationCenter 2>/dev/null || true
+    echo "✓ Notification Center UI disabled"
+fi
+
+# Disable automatic software update checks (reduces background network/CPU)
+if confirm "Disable automatic software update checks? [Y/n]"; then
+    sudo softwareupdate --schedule off 2>/dev/null
+    defaults write com.apple.SoftwareUpdate AutomaticCheckEnabled -bool false
+    echo "✓ Automatic software update checks disabled"
+fi
+
+echo "" 
 
 # 9. Focus Mode Configuration
 echo "=== 9. FOCUS MODE CONFIGURATION ==="

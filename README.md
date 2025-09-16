@@ -230,6 +230,51 @@ The script automatically creates a comprehensive restoration script:
 - [ ] **Note current performance** for comparison
 - [ ] **Ensure stable power** (UPS recommended for desktop)
 
+## 🚦 **Usage**
+
+### Dry Run (no changes applied)
+```bash
+# Option 1: environment variable
+DRY_RUN=1 ./macOS_Silverback-Debloater.sh
+
+# Option 2: flag
+./macOS_Silverback-Debloater.sh --dry-run
+```
+
+### Run for real (interactive, with safety prompts)
+```bash
+./macOS_Silverback-Debloater.sh
+```
+
+### Restore all changes
+```bash
+~/Desktop/restore_audio_optimization.sh
+```
+
+### Quick validation
+```bash
+# Syntax check (no execution)
+bash -n macOS_Silverback-Debloater.sh
+
+# List disabled services after run
+launchctl list | grep -E "(disabled|not found)"
+```
+
+### Optional system-lightening toggles (interactive)
+During execution you can optionally disable:
+- App Nap globally
+- iCloud Drive sync (bird, cloudd) [user scope]
+- Handoff / Universal Clipboard (sharingd)
+- Notification Center UI (notificationcenterui)
+- Automatic software update checks
+
+All of these are reversible via the restoration script.
+
+### Implementation notes
+- Dynamic GUI scope: user launchctl actions are performed on gui/$CURRENT_UID (no hardcoded 501)
+- Safer sysctl: only apply supported keys; persistence to /etc/sysctl.conf is deduplicated
+- Robust memory detection: MEMORY_GB derived from hw.memsize
+
 ## 🎵 **Audio Configuration Recommendations**
 
 ### **For Logic Pro X**
@@ -407,6 +452,7 @@ system_profiler SPAudioDataType
 - **Automated testing**: Built-in benchmarking
 
 ### **Version History**
+- **v2.1**: Added Dry Run mode; safer sysctl helpers and deduped persistence; dynamic GUI UID; optional system-lightening toggles (App Nap, iCloud Drive, Handoff, Notification Center, auto updates)
 - **v2.0**: Added Sequoia support, AI service management
 - **v1.0**: Initial Monterey release
 
