@@ -214,6 +214,12 @@ defaults delete NSGlobalDomain NSScrollViewRubberbanding 2>/dev/null
 # Restore application state saving
 defaults delete com.apple.loginwindow TALLogoutSavesState 2>/dev/null
 
+# Restore iCloud preferences
+defaults delete com.apple.iCloudServices NSStatus 2>/dev/null
+defaults delete com.apple.iCloudServices WBSStatus 2>/dev/null
+defaults delete com.apple.applicationaccess NSAllowCloudDocumentSync 2>/dev/null
+defaults delete com.apple.applicationaccess NSAllowCloudKeychainSync 2>/dev/null
+
 # Remove custom kernel parameters
 echo "🔧 Removing custom kernel parameters..."
 sudo sed -i '' '/# macOS Audio Optimizations/d' /etc/sysctl.conf 2>/dev/null
@@ -246,11 +252,24 @@ SERVICES_TO_RESTORE=(
     "com.apple.WeatherKit"
     "com.apple.mlruntime"
     "com.apple.aiml.appleintelligenceserviced"
-    # Newly added optional services
     "com.apple.bird"
     "com.apple.cloudd"
     "com.apple.sharingd"
     "com.apple.notificationcenterui"
+    # iCloud services for restoration
+    "com.apple.cloudphotod"
+    "com.apple.icloud.fmfd"
+    "com.apple.icloud.helper"
+    "com.apple.iCloudHelper"
+    "com.apple.icloud.search"
+    "com.apple.icloud.d"
+    "com.apple.iCloudNotificationAgent"
+    "com.apple.iCloudUserNotifications"
+    "com.apple.icloud.presence"
+    "com.apple.appleaccountd"
+    "com.apple.accountsd"
+    "com.apple.SafariCloudHistoryPushAgent"
+    "com.apple.syncdefaultsd"
 )
 
 for service in "${SERVICES_TO_RESTORE[@]}"; do
@@ -706,7 +725,75 @@ if confirm "Disable automatic software update checks? [Y/n]"; then
     echo "✓ Automatic software update checks disabled"
 fi
 
-echo "" 
+# ===== COMPLETE iCLOUD DISABLE OPTION =====
+echo ""
+echo "=== COMPLETE iCLOUD DISABLE ==="
+echo "WARNING: This will disable ALL iCloud services and synchronization."
+echo "Your iCloud data will NOT sync across devices until re-enabled."
+echo ""
+echo "This includes:"
+echo "• iCloud Drive sync"
+echo "• iCloud Photos" 
+echo "• iCloud Backup"
+echo "• iCloud Keychain"
+echo "• Find My Mac"
+echo "• iCloud Mail, Contacts, Calendars"
+echo "• Game Center"
+echo "• iCloud Passwords"
+echo ""
+if confirm "🚫 DISABLE ALL iCLOUD SERVICES? (WARNING: Breaks iCloud functionality) [Y/n]"; then
+    echo ""
+    echo "⚠️  DISABLING ALL iCLOUD SERVICES..."
+    
+    # Servicios principales de iCloud
+    iCLOUD_SERVICES=(
+        "com.apple.bird"                          # iCloud sync daemon
+        "com.apple.cloudd"                        # Cloud services
+        "com.apple.cloudphotod"                   # iCloud Photos
+        "com.apple.icloud.fmfd"                   # Find My Mac
+        "com.apple.icloud.helper"                 # iCloud helper
+        "com.apple.iCloudHelper"                  # Additional iCloud helper
+        "com.apple.icloud.search"                 # iCloud search
+        "com.apple.icloud.d"                      # iCloud daemon
+        "com.apple.iCloudNotificationAgent"       # iCloud notifications
+        "com.apple.iCloudUserNotifications"       # iCloud user notifications
+        "com.apple.icloud.presence"               # iCloud presence
+        "com.apple.appleaccountd"                 # Apple Account daemon (iCloud)
+        "com.apple.accountsd"                     # Accounts daemon (iCloud)
+        "com.apple.SafariCloudHistoryPushAgent"   # Safari iCloud sync
+        "com.apple.syncdefaultsd"                 # Sync services (iCloud)
+    )
+    
+    for service in "${iCLOUD_SERVICES[@]}"; do
+        sudo launchctl bootout system/$service 2>/dev/null
+        sudo launchctl disable system/$service 2>/dev/null
+        launchctl bootout gui/$CURRENT_UID/$service 2>/dev/null
+        launchctl disable gui/$CURRENT_UID/$service 2>/dev/null
+    done
+    
+    # Deshabilitar iCloud en preferencias (previene reactivación)
+    defaults write com.apple.iCloudServices NSStatus -bool false
+    defaults write com.apple.iCloudServices WBSStatus -bool false
+    defaults write com.apple.applicationaccess NSAllowCloudDocumentSync -bool false
+    defaults write com.apple.applicationaccess NSAllowCloudKeychainSync -bool false
+    
+    echo "✓ ALL iCloud services disabled"
+    echo "  → iCloud Drive, Photos, Backup, Keychain, Find My disabled"
+    echo "  → No automatic synchronization will occur"
+    echo "  → Significant reduction in background network/CPU usage"
+    
+    # Advertencia adicional
+    echo ""
+    echo "⚠️  IMPORTANT: iCloud is now DISABLED. You will need to:"
+    echo "   • Manually backup important files"
+    echo "   • Use alternative cloud services if needed"
+    echo "   • Run restoration script to re-enable iCloud"
+    
+else
+    echo "- iCloud services kept active"
+    echo "  ℹ️  iCloud Drive sync can be disabled separately above"
+fi
+echo ""
 
 # 9. Focus Mode Configuration
 echo "=== 9. FOCUS MODE CONFIGURATION ==="
@@ -808,4 +895,4 @@ echo "🔄 RESTORATION:"
 echo "If you experience any issues, run:"
 echo "   ~/Desktop/restore_audio_optimization.sh"
 echo ""
-echo
+echo "🎛️  Happy music production on your optimized Intel Mac!"
