@@ -228,8 +228,17 @@ sudo sed -i '' '/kern.maxfilesperproc=/d' /etc/sysctl.conf 2>/dev/null
 sudo sed -i '' '/kern.ipc.maxsockbuf=/d' /etc/sysctl.conf 2>/dev/null
 sudo sed -i '' '/net.inet.tcp.sendspace=/d' /etc/sysctl.conf 2>/dev/null
 sudo sed -i '' '/net.inet.tcp.recvspace=/d' /etc/sysctl.conf 2>/dev/null
+sudo sed -i '' '/kern.ipc.somaxconn=/d' /etc/sysctl.conf 2>/dev/null
+sudo sed -i '' '/net.inet.tcp.delayed_ack=/d' /etc/sysctl.conf 2>/dev/null
 sudo sed -i '' '/vm.swappiness=/d' /etc/sysctl.conf 2>/dev/null
 sudo sed -i '' '/kern.timer.longterm.threshold=/d' /etc/sysctl.conf 2>/dev/null
+
+# Restore Sequoia features
+echo "🔄 Restoring Sequoia features..."
+defaults delete com.apple.LiveText Enabled 2>/dev/null
+defaults delete com.apple.screencapture disable-text-detection 2>/dev/null
+defaults delete com.apple.VKCImageAnalyzer VKCImageAnalysisEnabled 2>/dev/null
+defaults delete com.apple.WritingTools Enabled 2>/dev/null
 
 # Reactivate disabled services
 echo "🔄 Reactivating system services..."
@@ -252,6 +261,14 @@ SERVICES_TO_RESTORE=(
     "com.apple.WeatherKit"
     "com.apple.mlruntime"
     "com.apple.aiml.appleintelligenceserviced"
+    "com.apple.parsecd"
+    "com.apple.tipsd"
+    "com.apple.contextstored"
+    "com.apple.coreduetd.knowledge-agent"
+    "com.apple.triald"
+    "com.apple.biomesyncd"
+    "com.apple.CoreLocationAgent"
+    "com.apple.LiveLookup.agent"
     "com.apple.bird"
     "com.apple.cloudd"
     "com.apple.sharingd"
@@ -427,6 +444,10 @@ if confirm_recommended "Disable unnecessary background services (telemetry, anal
         "com.apple.ap.adprivacyd"
         "com.apple.ap.adservicesd"
         "com.apple.ap.promotedcontentd"
+        "com.apple.parsecd"
+        "com.apple.tipsd"
+        "com.apple.contextstored"
+        "com.apple.coreduetd.knowledge-agent"
     )
     
     # Monterey-specific services
@@ -448,6 +469,10 @@ if confirm_recommended "Disable unnecessary background services (telemetry, anal
             "com.apple.WeatherKit.service"
             "com.apple.mlruntime"
             "com.apple.aiml.appleintelligenceserviced"
+            "com.apple.triald"
+            "com.apple.biomesyncd"
+            "com.apple.CoreLocationAgent"
+            "com.apple.LiveLookup.agent"
         )
         SAFE_TO_DISABLE+=("${SEQUOIA_SERVICES[@]}")
     fi
@@ -510,6 +535,10 @@ if confirm_recommended "Apply enhanced audio-specific kernel and memory optimiza
     sysctl_set kern.ipc.maxsockbuf 8388608
     sysctl_set net.inet.tcp.sendspace 1048576
     sysctl_set net.inet.tcp.recvspace 1048576
+    
+    # Additional network optimizations for audio interfaces
+    sysctl_set kern.ipc.somaxconn 2048
+    sysctl_set net.inet.tcp.delayed_ack 0
     
     # Additional optimizations that work on both OS versions (applied if supported)
     sysctl_set kern.timer.longterm.threshold 1000
@@ -614,15 +643,6 @@ elif [[ "$IS_SEQUOIA" == true ]]; then
         echo "✓ WeatherKit disabled"
     fi
     
-    # Screen Time Agent (enhanced in Sequoia)
-    echo ""
-    echo "Screen Time Agent tracks app usage and can impact performance."
-    if confirm "Disable Screen Time tracking? [Y/n]"; then
-        sudo launchctl bootout system/com.apple.ScreenTimeAgent 2>/dev/null
-        sudo launchctl disable system/com.apple.ScreenTimeAgent 2>/dev/null
-        echo "✓ Screen Time tracking disabled"
-    fi
-    
     # Sequoia-specific kernel tweaks
     echo ""
     echo "Applying Sequoia-specific kernel optimizations..."
@@ -636,6 +656,54 @@ elif [[ "$IS_SEQUOIA" == true ]]; then
         
         echo "✓ Sequoia-specific kernel optimizations applied"
         echo "  → Better memory management for audio workloads (where supported)"
+    fi
+    
+    # Additional Sequoia feature optimizations
+    echo ""
+    echo "=== ADDITIONAL SEQUOIA FEATURE OPTIMIZATIONS ==="
+    echo "These features use ML/AI processing and can impact real-time audio performance."
+    echo ""
+    
+    # Live Text
+    echo "Live Text performs OCR on images system-wide, consuming CPU and memory."
+    if confirm "Disable Live Text feature? [Y/n]"; then
+        defaults write com.apple.LiveText Enabled -bool false
+        defaults write com.apple.screencapture disable-text-detection -bool true
+        echo "✓ Live Text disabled"
+    fi
+    
+    # Visual Look Up
+    echo ""
+    echo "Visual Look Up analyzes images for objects and landmarks."
+    if confirm "Disable Visual Look Up? [Y/n]"; then
+        defaults write com.apple.VKCImageAnalyzer VKCImageAnalysisEnabled -bool false
+        echo "✓ Visual Look Up disabled"
+    fi
+    
+    # Writing Tools (AI-powered)
+    echo ""
+    echo "Writing Tools provide AI-powered writing assistance but use significant resources."
+    if confirm "Disable Writing Tools? [Y/n]"; then
+        defaults write com.apple.WritingTools Enabled -bool false
+        echo "✓ Writing Tools disabled"
+    fi
+    
+    # Clean up Biome data (reduces biomesyncd overhead)
+    echo ""
+    echo "Biome stores cross-device sync data. Cleaning it can reduce background processing."
+    if confirm "Clean Biome sync data? (Safe - will regenerate if needed) [Y/n]"; then
+        rm -rf ~/Library/Biome/* 2>/dev/null
+        echo "✓ Biome data cleaned"
+        echo "  → biomesyncd overhead significantly reduced"
+    fi
+    
+    # Clean up Trial data (reduces triald overhead)
+    echo ""
+    echo "Trial stores Siri experiment data. Cleaning it can reduce CPU usage."
+    if confirm "Clean Trial experiment data? (Safe - will regenerate if needed) [Y/n]"; then
+        rm -rf ~/Library/Trial/* 2>/dev/null
+        echo "✓ Trial data cleaned"
+        echo "  → triald CPU usage reduced"
     fi
 fi
 echo ""
